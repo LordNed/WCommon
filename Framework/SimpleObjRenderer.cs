@@ -18,7 +18,9 @@ namespace WindEditor
 
         public bool Highlighted;
         public bool BlendingEnabled;
+        public bool FaceCullingEnabled;
         public Vector4 TintColor;
+        public TextureWrapMode TexWrapMode;
 
         private int m_vertexVBO;
         private int m_indexVBO;
@@ -36,7 +38,7 @@ namespace WindEditor
         private bool m_hasBeenDisposed = false;
 
 
-        public SimpleObjRenderer(Obj file, Vector4 tint_color, bool enable_blending = false)
+        public SimpleObjRenderer(Obj file, Vector4 tint_color, bool enable_blending = false, bool enable_face_culling = true, TextureWrapMode wrap_mode = TextureWrapMode.Repeat)
         {
             m_vertexVBO = GL.GenBuffer();
             m_indexVBO = GL.GenBuffer();
@@ -55,7 +57,9 @@ namespace WindEditor
             m_highlightedShader.LinkShader();
 
             BlendingEnabled = enable_blending;
+            FaceCullingEnabled = enable_face_culling;
             TintColor = tint_color;
+            TexWrapMode = wrap_mode;
 
             // Generate an array of all vertices instead of the compact form OBJ comes as.
             Vector3[] positions = null;
@@ -131,8 +135,8 @@ namespace WindEditor
                 Obj.ObjMaterial mat = file.Material;
 
                 GL.BindTexture(TextureTarget.Texture2D, m_textureVBO);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TexWrapMode);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TexWrapMode);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
@@ -159,7 +163,13 @@ namespace WindEditor
         {
             GL.FrontFace(FrontFaceDirection.Cw);
             GL.CullFace(CullFaceMode.Front);
-            GL.Enable(EnableCap.CullFace);
+            if (FaceCullingEnabled)
+            {
+                GL.Enable(EnableCap.CullFace);
+            } else
+            {
+                GL.Disable(EnableCap.CullFace);
+            }
             GL.Enable(EnableCap.DepthTest);
 
             if (BlendingEnabled)
